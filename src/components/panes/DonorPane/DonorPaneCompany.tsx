@@ -8,16 +8,14 @@ import useAllTexts from '../../../hooks/content/useAllTexts'
 import useTypedDispatch from '../../../hooks/store/useTypedDispatch'
 import useTypedSelector from '../../../hooks/store/useTypedSelector'
 import { donationActions } from '../../../store/donation/donation.slice'
-import { DonorInput } from '../../../store/state'
+import { DonorInputCompany } from '../../../store/state'
 import { uiActions } from '../../../store/ui/ui.slice'
-import { isValidNumber } from '../../../utils/typeUtils'
 import { NavigationButtons } from '../../shared/Buttons/NavigationButtons'
 import ErrorField from '../../shared/Error/ErrorField'
 import TextInput from '../../shared/Input/TextInput'
 import { PrimaryLink } from '../../shared/Link/PrimaryLink'
 import { RichSelect } from '../../shared/RichSelect/RichSelect'
 import { RichSelectOption } from '../../shared/RichSelect/RichSelectOption'
-import { ToolTipLink } from '../../shared/ToolTip/ToolTipLink'
 import ActionString from '../../shared/_functional/ActionString'
 import {
   InputFieldWrapper,
@@ -28,11 +26,11 @@ import {
 } from '../Forms.style'
 import { Pane } from '../Panes.style'
 
-interface DonorFormValues extends DonorInput {
+interface DonorFormValues extends DonorInputCompany {
   privacyPolicy: boolean
 }
 
-export function DonorPane() {
+export function DonorPaneCompany() {
   const dispatch = useTypedDispatch()
   const initialDonorType = useTypedSelector((state) => state.donation.donorType)
   const [selectedDonorType, setDonorType] =
@@ -46,7 +44,6 @@ export function DonorPane() {
 
   const {
     register,
-    watch,
     handleSubmit,
     formState: { errors },
   } = useForm<DonorFormValues>({
@@ -54,33 +51,32 @@ export function DonorPane() {
       ? {}
       : {
           name: donor?.name,
+          companyName: donor?.companyName,
           email: donor?.email,
-          taxDeduction: donor?.taxDeduction,
-          ssn: donor?.taxDeduction ? donor?.ssn : undefined,
+          organizationNumber: donor?.organizationNumber,
           newsletter: donor?.newsletter,
           approvesPrivacyPolicy: donor?.approvesPrivacyPolicy,
         },
   })
 
-  const watchAllFields = watch()
-
   const isNameInvalid = Boolean(errors.name)
+  const isCompanyNameInvalid = Boolean(errors.companyName)
+  const isOrganizationNumberInvalid = Boolean(errors.organizationNumber)
   const isEmailInvalid = Boolean(errors.email)
-  const isSsnInvalid = Boolean(errors.ssn)
   const isPrivacyPolicyInvalid = Boolean(errors.privacyPolicy)
 
   const isNextDisabled = !isAnonymous && Object.keys(errors).length > 0
 
   function onFormSubmit(formValues: DonorFormValues) {
-    let donorInfo: Required<DonorInput>
+    let donorInfo: Required<DonorInputCompany>
     if (isAnonymous) {
       donorInfo = { ...paneTexts.anonymousDonor }
     } else {
       donorInfo = {
         name: formValues.name ?? '',
+        companyName: formValues.companyName ?? '',
         email: formValues.email ?? '',
-        taxDeduction: formValues.taxDeduction ?? false,
-        ssn: formValues.ssn ?? '',
+        organizationNumber: formValues.organizationNumber ?? '',
         newsletter: formValues.newsletter ?? false,
         approvesPrivacyPolicy: formValues.privacyPolicy,
       }
@@ -113,6 +109,35 @@ export function DonorPane() {
               {isNameInvalid && <ErrorField text={paneTexts.nameError} />}
 
               <TextInput
+                type="text"
+                placeholder={paneTexts.companyNamePlaceholder}
+                {...register('companyName', {
+                  required: true,
+                  minLength: 1,
+                })}
+                valid={!isCompanyNameInvalid}
+              />
+
+              {isCompanyNameInvalid && (
+                <ErrorField text={paneTexts.companyNameError} />
+              )}
+
+              <TextInput
+                type="text"
+                placeholder={paneTexts.organizationNumberPlaceholder}
+                {...register('organizationNumber', {
+                  required: true,
+                  validate: (val) =>
+                    val && Validate.matches(val, /^(\d{1})(\d{5})\-(\d{4})$/),
+                })}
+                valid={!isOrganizationNumberInvalid}
+              />
+
+              {isOrganizationNumberInvalid && (
+                <ErrorField text={paneTexts.organizationNumberError} />
+              )}
+
+              <TextInput
                 inputMode="email"
                 type="text"
                 placeholder={paneTexts.emailPlaceholder}
@@ -126,45 +151,6 @@ export function DonorPane() {
             </InputFieldWrapper>
 
             <Container>
-              <CheckboxWrapper>
-                <CheckBox type="checkbox" {...register('taxDeduction')} />
-
-                <CheckboxLabel>{paneTexts.taxDeductionLabel}</CheckboxLabel>
-
-                <ToolTipLink text={paneTexts.taxDeductionTooltip} />
-              </CheckboxWrapper>
-
-              {watch('taxDeduction') && (
-                <InputFieldWrapper>
-                  <TextInput
-                    type="tel"
-                    inputMode="numeric"
-                    onInput={(e) =>
-                      (e.currentTarget.value = e.currentTarget.value.replace(
-                        /[^0-9]/g,
-                        ''
-                      ))
-                    }
-                    placeholder={paneTexts.ssnPlaceholder}
-                    {...register('ssn', {
-                      required: false,
-                      validate: (val) => {
-                        const valNumber = Number.parseInt(val ?? '0')
-                        return (
-                          !watchAllFields.taxDeduction ||
-                          (val !== undefined &&
-                            isValidNumber(valNumber) &&
-                            Validate.matches(val, /^\d{10}$|^\d{12}$/))
-                        )
-                      },
-                    })}
-                    valid={!isSsnInvalid}
-                  />
-
-                  {isSsnInvalid && <ErrorField text={paneTexts.ssnError} />}
-                </InputFieldWrapper>
-              )}
-
               <CheckboxWrapper>
                 <CheckBox
                   type="checkbox"

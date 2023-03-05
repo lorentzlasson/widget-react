@@ -1,3 +1,4 @@
+import { IS_IN_COMPANY_MODE } from '../config'
 import useAllCauses from '../hooks/content/useAllCauses'
 import useTypedDispatch from '../hooks/store/useTypedDispatch'
 import useOnMount from '../hooks/utils/useOnMount'
@@ -8,6 +9,7 @@ import { DonationWidgetWrapper } from './DonationWidget.style'
 import FlowProgress from './FlowProgress'
 import DistributionSelectionPane from './panes/DistributionSelectionPane'
 import { DonorPane } from './panes/DonorPane/DonorPane'
+import { DonorPaneCompany } from './panes/DonorPane/DonorPaneCompany'
 import { MethodPane } from './panes/MethodPane/MethodPane'
 import { PaymentPane } from './panes/PaymentPane/PaymentPane'
 import { ReferralPane } from './panes/ReferralPane/ReferralPane'
@@ -26,7 +28,7 @@ export default function DonationWidget() {
     <DonationWidgetWrapper>
       <Carousel>
         <MethodPane />
-        <DonorPane />
+        {IS_IN_COMPANY_MODE ? <DonorPaneCompany /> : <DonorPane />}
         <DistributionSelectionPane />
         <ReferralPane />
         <SummaryPane />
